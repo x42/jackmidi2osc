@@ -225,7 +225,7 @@ static int init_jack (const char *client_name) {
 		fprintf (stderr, "jack-client name: `%s'\n", client_name);
 	}
 	jack_set_process_callback (j_client, process, 0);
-  samplerate = (double) jack_get_sample_rate (j_client);
+	samplerate = (double) jack_get_sample_rate (j_client);
 
 	jack_on_shutdown (j_client, jack_shutdown, NULL);
 	return (0);
@@ -924,7 +924,7 @@ int main (int argc, char ** argv) {
 
 	pthread_mutex_lock (&msg_thread_lock);
 
-	const jack_nframes_t deadzone = (sync_mode == SyncImmediate) ? 0 : ceil (0.0005 * samplerate); // .5ms 
+	const jack_nframes_t deadzone = (sync_mode == SyncImmediate) ? 0 : ceil (0.0005 * samplerate); // .5ms
 	assert (deadzone >= 0);
 
 	/* all systems go */
@@ -939,7 +939,7 @@ int main (int argc, char ** argv) {
 			jack_ringbuffer_read (rb, (char*) &mmsg, sizeof (MidiMessage));
 
 			if (want_verbose > 1) {
-				printf ("RX MIDI: [0x%02x 0x%02x 0x%02x] @%"PRIu32"\n", 
+				printf ("RX MIDI: [0x%02x 0x%02x 0x%02x] @%"PRIu32"\n",
 						(uint8_t)mmsg.d[0], (uint8_t)mmsg.d[1], (uint8_t)mmsg.d[2], mmsg.tme
 						);
 			}
