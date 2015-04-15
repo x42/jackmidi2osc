@@ -255,6 +255,24 @@ static int inport_connect (char *port) {
  * Configuration & Rules
  */
 
+#ifdef _WIN32
+static char * strndup (const char *s, size_t n) {
+	size_t len = strlen (s);
+
+	if (n < len) {
+		len = n;
+	}
+
+	char *rv = (char *) malloc (len + 1);
+	if (!rv) {
+		return 0;
+	}
+
+	rv[len] = '\0';
+	return memcpy (rv, s, len);
+}
+#endif
+
 static int append_osc_message (Rule *r, const char *path, const char *desc, const char *param) {
 	assert (path);
 	assert (desc);
@@ -704,15 +722,15 @@ static void expand_and_send (Rule *r, MidiMessage *m) {
  * main application code
  */
 
+#ifndef _WIN32
 static void wearedone (int sig) {
 	fprintf (stderr,"caught signal - shutting down.\n");
 	run = Terminate;
 	pthread_cond_signal (&data_ready);
-#ifndef _WIN32
 	signal (SIGHUP, SIG_DFL);
 	signal (SIGINT, SIG_DFL);
-#endif
 }
+#endif
 
 static struct option const long_options[] =
 {
@@ -904,9 +922,11 @@ int main (int argc, char ** argv) {
 		goto out;
 	}
 
+#ifndef _WIN32
 	if (mlockall (MCL_CURRENT | MCL_FUTURE)) {
 		fprintf (stderr, "Warning: Cannot lock memory.\n");
 	}
+#endif
 
 	if (jack_activate (j_client)) {
 		fprintf (stderr, "cannot activate client.\n");

@@ -28,9 +28,9 @@ man1dir   = $(mandir)/man1
 
 default: all
 
-jackmidi2osc: jackmidi2osc.c
+jackmidi2osc$(EXE_EXT): jackmidi2osc.c
 
-install-bin: jackmidi2osc
+install-bin: jackmidi2osc$(EXE_EXT)
 	install -d $(DESTDIR)$(bindir)
 	install -m755 jackmidi2osc $(DESTDIR)$(bindir)
 
@@ -39,7 +39,7 @@ install-man: jackmidi2osc.1
 	install -m644 jackmidi2osc.1 $(DESTDIR)$(man1dir)
 
 uninstall-bin:
-	rm -f $(DESTDIR)$(bindir)/jackmidi2osc
+	rm -f $(DESTDIR)$(bindir)/jackmidi2osc$(EXE_EXT)
 	-rmdir $(DESTDIR)$(bindir)
 
 uninstall-man:
@@ -48,12 +48,12 @@ uninstall-man:
 	-rmdir $(DESTDIR)$(mandir)
 
 clean:
-	rm -f jackmidi2osc
+	rm -f jackmidi2osc$(EXE_EXT)
 
 man: jackmidi2osc
 	help2man -N -n 'JACK MIDI to OSC' -o jackmidi2osc.1 ./jackmidi2osc
 
-all: jackmidi2osc
+all: jackmidi2osc$(EXE_EXT)
 
 install: install-bin install-man
 

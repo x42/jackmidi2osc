@@ -1,5 +1,7 @@
 jackmidi2osc
+jackmidi2osc.exe
 
 *.swp
 cscope.*
 tags
+*.dSYM
