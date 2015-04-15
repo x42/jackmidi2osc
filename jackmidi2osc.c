@@ -492,6 +492,9 @@ static int read_config (const char *configfile) {
 				free (j_connect);
 				j_connect = strdup(line + 6);
 			}
+			else if (!strncasecmp(line, "syncmode=", 9) && strlen(line) > 9) {
+				parse_sync_mode(line + 9);
+			}
 		} else {
 			fprintf (stderr, "Ignored config line: %d\n", lineno);
 		}
