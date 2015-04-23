@@ -7,12 +7,12 @@ by [JACK](http://jackaudio.org/) MIDI events.
 Usage
 -----
 
-See the included manual page as well as example configuration file.
+See the included manual page as well as example configuration files.
 
 Install
 -------
 
-Compiling these plugin requires the JACK, liblo, gnu-make, a c-compiler,
+Compiling this application requires the JACK, liblo, gnu-make and a c-compiler.
 
 ```bash
   git clone git://github.com/x42/jackmidi2osc.git
@@ -25,6 +25,14 @@ Compiling these plugin requires the JACK, liblo, gnu-make, a c-compiler,
   ./jackmidi2osc -v -c cfg/example.cfg
   # check for messages via 
   # oscdump 5849
+```
+
+Note to packagers: The Makefile honors `PREFIX` and `DESTDIR` variables as well
+common make variables. `CFLAGS` defaults to `-Wall -O3 -g`.
+
+```bash
+make CFLAGS="-Werror -O3"
+make install DESTDIR=/tmp/ PREFIX=/usr
 ```
 
 See Also
