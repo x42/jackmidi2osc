@@ -759,6 +759,7 @@ static void usage (int status) {
   -o <addr>, --osc <addr>\n\
                         set OSC destination address\n\
                         as 'host:port' or simply port-number\n\
+                        (defaults to localhost:3819)\n\
   -s <mode>, --syncmode <mode>\n\
                         OSC event timing. Mode is one of 'Immediate',\n\
                         'Absolute', 'Relative' (default: 'Immediate')\n\
@@ -770,19 +771,28 @@ static void usage (int status) {
 A configurable tool to read midi events from a jack midi port and trigger OSC\n\
 messages.\n\
 \n\
+The main use-case is to perform complex actions with a simple midi-event.\n\
+e.g set ardour-mixer scenes (mute, gain, plugin-settings) with a single button press.\n\
+jackmidi2osc also facilitates to translating MIDI note and CC events to OSC in realtime.\n\
+\n\
 See the example configuration file for further explanation.\n\
+\n\
+Configuration Files:\n\
+By default jackmidi2osc reads $XDG_CONFIG_HOME/jackmidi2osc/default.cfg\n\
+on startup if the file exists.\n\
 \n\
 Sync Modes:\n\
  'Immediate'   send events as soon as possible. Ignore event time.\n\
                All events from one jack cycle are sent successicely\n\
  'Absolute'    Use absolute event time (audio clock). Future events are\n\
-               queued, past events send immediatley.\n\
+               queued, past events are send immediatley.\n\
                Depending on network i/o, events near the beginning of\n\
                a jack cycle may be in the 'past' (compared to absolute\n\
                time) and hence the OSC stream is jittery\n\
  'Relative'    use relative time (audio clock) between midi events\n\
                with one cycle latency.\n\
-               Compared to 'absolute' this mode has smaller jitter.\n\
+               Compared to 'absolute' this mode has smaller jitter and\n\
+               always retains the timing.\n\
 \n");
 	printf ("Report bugs to Robin Gareus <robin@gareus.org>\n"
 	        "Website and manual: <https://github.com/x42/jackmidi2osc>\n"

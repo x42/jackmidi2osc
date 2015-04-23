@@ -1,8 +1,13 @@
 JACK MIDI TO OSC
 ================
 
-A small utility that generates [OSC](http://opensoundcontrol.org) triggered
+A configurable tool to generate [OSC](http://opensoundcontrol.org) triggered
 by [JACK](http://jackaudio.org/) MIDI events.
+
+The main use-case is to perform complex actions with a simple midi-event.
+e.g set ardour-mixer scenes (mute, gain, plugin-settings) with a single button press.
+
+jackmidi2osc also facilitates to translating MIDI note and CC-events to OSC in realtime.
 
 Usage
 -----
