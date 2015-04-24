@@ -96,6 +96,7 @@ typedef struct {
 typedef struct {
 	uint8_t             mask[3];
 	uint8_t             match[3];
+	uint8_t             len;
 	unsigned int        message_count;
 	OSCMessageTemplate *msg;
 } Rule;
@@ -107,11 +108,11 @@ unsigned int rule_count = 0;
 typedef struct {
 	jack_nframes_t tme;
 	uint8_t        d[3];
+	uint8_t        len;
 } MidiMessage;
 
 static int process_jmidi_event (jack_midi_event_t *ev, const jack_nframes_t tme) {
-	if (ev->size != 3) {
-		printf("IGNORED..\n");
+	if (ev->size < 1 || ev->size > 3) {
 		return 0;
 	}
 
@@ -120,8 +121,20 @@ static int process_jmidi_event (jack_midi_event_t *ev, const jack_nframes_t tme)
 
 		mmsg.tme = tme + ev->time;
 		mmsg.d[0] = ev->buffer[0];
-		mmsg.d[1] = ev->buffer[1];
-		mmsg.d[2] = ev->buffer[2];
+
+		if (ev->size == 1) {
+			mmsg.len = 1;
+			mmsg.d[1] = 0;
+			mmsg.d[2] = 0;
+		} else if (ev->size == 2) {
+			mmsg.len = 2;
+			mmsg.d[1] = ev->buffer[1];
+			mmsg.d[2] = 0;
+		} else {
+			mmsg.len = 3;
+			mmsg.d[1] = ev->buffer[1];
+			mmsg.d[2] = ev->buffer[2];
+		}
 
 		jack_ringbuffer_write (rb, (void *) &mmsg, sizeof (MidiMessage));
 		return 1;
@@ -344,9 +357,7 @@ static Rule *new_rule (const char *flt) {
 	}
 
 	Rule *r = &rules[rc];
-
-	r->msg = NULL;
-	r->message_count = 0;
+	memset(r, 0, sizeof(Rule));
 
 	char *tmp, *fre, *prt;
 	int param[2];
@@ -354,16 +365,38 @@ static Rule *new_rule (const char *flt) {
 
 	tmp = fre = strdup(flt);
 	for (prt = strtok(tmp, " "); prt; prt = strtok(NULL, " "), ++i) {
+		if (i >= 3) {
+			i = -1;
+			break;
+		}
 		if (!strcasecmp(prt, "ANY")) {
 			r->mask[i] = 0x00; r->match[i] = 0x00;
-		} else if (i == 0 && !strcasecmp(prt, "NOTEON")) {
-			r->mask[i] = 0xf0; r->match[i] = 0x90;
-		} else if (i == 0 && !strcasecmp(prt, "NOTEOFF")) {
-			r->mask[i] = 0xf0; r->match[i] = 0x80;
 		} else if (i == 0 && !strcasecmp(prt, "NOTE")) {
 			r->mask[i] = 0xe0; r->match[i] = 0x80;
+		} else if (i == 0 && !strcasecmp(prt, "NOTEOFF")) {
+			r->mask[i] = 0xf0; r->match[i] = 0x80;
+		} else if (i == 0 && !strcasecmp(prt, "NOTEON")) {
+			r->mask[i] = 0xf0; r->match[i] = 0x90;
+		} else if (i == 0 && !strcasecmp(prt, "KeyPressure")) {
+			r->mask[i] = 0xf0; r->match[i] = 0xa0; // Aftertouch, 3 bytes
 		} else if (i == 0 && !strcasecmp(prt, "CC")) {
 			r->mask[i] = 0xf0; r->match[i] = 0xb0;
+		} else if (i == 0 && !strcasecmp(prt, "PGM")) {
+			r->mask[i] = 0xf0; r->match[i] = 0xc0;
+		} else if (i == 0 && !strcasecmp(prt, "ChanPressure")) {
+			r->mask[i] = 0xf0; r->match[i] = 0xd0; // Aftertouch, 2 bytes
+		} else if (i == 0 && !strcasecmp(prt, "Pitch")) {
+			r->mask[i] = 0xf0; r->match[i] = 0xe0;
+		} else if (i == 0 && !strcasecmp(prt, "Pos")) {
+			r->mask[i] = 0xff; r->match[i] = 0xf2; // Song Position Pointer, 3 bytes
+		} else if (i == 0 && !strcasecmp(prt, "Song")) {
+			r->mask[i] = 0xff; r->match[i] = 0xf3; // Song select 2 bytes
+		} else if (i == 0 && !strcasecmp(prt, "Start")) {
+			r->mask[i] = 0xff; r->match[i] = 0xfa; // rt 1 byte
+		} else if (i == 0 && !strcasecmp(prt, "Cont")) {
+			r->mask[i] = 0xff; r->match[i] = 0xfb; // rt 1 byte
+		} else if (i == 0 && !strcasecmp(prt, "Stop")) {
+			r->mask[i] = 0xff; r->match[i] = 0xfc; // rt 1 byte
 		} else if (2 == sscanf (prt, "%i/%i", &param[0], &param[1])) {
 			r->mask[i] = param[1] & 0xff;
 			r->match[i] = param[0] & 0xff;
@@ -377,11 +410,13 @@ static Rule *new_rule (const char *flt) {
 		}
 	}
 	free (fre);
-	if (i != 3) {
+	if (i < 1 || i > 3) {
 		fprintf(stderr, "Invalid filter rule...\n");
 		--rule_count;
 		return NULL;
 	}
+	// TODO sanity check  message-type, len
+	r->len = i; // TODO allow 'len=0' catch all
 	return r;
 }
 
@@ -531,10 +566,15 @@ static void dump_cfg (void) {
 		int i;
 		Rule *r = &rules[j];
 		printf("# rule %d\n", j);
-		printf("[rule]\n0x%02x/0x%02x 0x%02x/0x%02x 0x%02x/0x%02x\n",
-				r->match[0], r->mask[0],
-				r->match[1], r->mask[1],
-				r->match[2], r->mask[2]);
+		printf("[rule]\n0x%02x/0x%02x", r->match[0], r->mask[0]);
+		if (r->len > 1) {
+			printf(" 0x%02x/0x%02x", r->match[1], r->mask[1]);
+		}
+		if (r->len > 2) {
+			printf(" 0x%02x/0x%02x", r->match[1], r->mask[1]);
+		}
+		printf("\n");
+
 		const unsigned int mc = r->message_count;
 		for (i = 0; i < mc; ++i) {
 			int k;
@@ -994,12 +1034,12 @@ int main (int argc, char ** argv) {
 
 			for (j = 0; j < rule_count; ++j) {
 				Rule *r = &rules[j];
-				if (    (mmsg.d[0] & r->mask[0]) == r->match[0]
-				     && (mmsg.d[1] & r->mask[1]) == r->match[1]
-				     && (mmsg.d[2] & r->mask[2]) == r->match[2]
-					 )
+				if (    (r->len == 0 || r->len == mmsg.len)
+				     && (                (mmsg.d[0] & r->mask[0]) == r->match[0])
+				     && (mmsg.len < 2 || (mmsg.d[1] & r->mask[1]) == r->match[1])
+				     && (mmsg.len < 3 || (mmsg.d[2] & r->mask[2]) == r->match[2])
+				   )
 				{
-
 					if (want_verbose > 1) {
 						printf("       | Rule #%d -> %d osc msg(s)\n", j, r->message_count);
 					}
