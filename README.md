@@ -43,4 +43,4 @@ make install DESTDIR=/tmp/ PREFIX=/usr
 See Also
 --------
 
-[osc2midi](http://sourceforge.net/projects/osc2midi/)
+[osc2midi](https://github.com/ssj71/OSC2MIDI/)
