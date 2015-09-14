@@ -246,7 +246,7 @@ static int init_jack (const char *client_name) {
 
 static int jack_portsetup (void) {
 	if ((j_input_port = jack_port_register (j_client, "in", JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0)) == 0) {
-		fprintf (stderr, "cannot register mclk input port !\n");
+		fprintf (stderr, "cannot register MIDI input port !\n");
 		return (-1);
 	}
 	return (0);
@@ -788,7 +788,7 @@ static struct option const long_options[] =
 };
 
 static void usage (int status) {
-	printf ("jackmidi2osx - JACK MIDI to OSC.\n\n");
+	printf ("jackmidi2osc - JACK MIDI to OSC.\n\n");
 	printf ("Usage: jackmidi2osc [ OPTIONS ]\n\n");
 	printf ("Options:\n\
   -c <file>, --config <file>\n\
@@ -808,11 +808,11 @@ static void usage (int status) {
 \n");
 /*                                  longest help text w/80 chars per line ---->|\n" */
 	printf ("\n\
-A configurable tool to read midi events from a jack midi port and trigger OSC\n\
+A configurable tool to read midi events from a JACK MIDI port and trigger OSC\n\
 messages.\n\
 \n\
-The main use-case is to perform complex actions with a simple midi-event.\n\
-e.g set ardour-mixer scenes (mute, gain, plugin-settings) with a single button press.\n\
+The main use-case is to perform complex actions with a simple MIDI-event.\n\
+e.g set Ardour-mixer scenes (mute, gain, plugin-settings) with a single button press.\n\
 jackmidi2osc also facilitates to translating MIDI note and CC events to OSC in realtime.\n\
 \n\
 See the example configuration file for further explanation.\n\
@@ -823,13 +823,13 @@ on startup if the file exists.\n\
 \n\
 Sync Modes:\n\
  'Immediate'   send events as soon as possible. Ignore event time.\n\
-               All events from one jack cycle are sent successicely\n\
+               All events from one jack cycle are sent successively\n\
  'Absolute'    Use absolute event time (audio clock). Future events are\n\
-               queued, past events are send immediatley.\n\
-               Depending on network i/o, events near the beginning of\n\
-               a jack cycle may be in the 'past' (compared to absolute\n\
+               queued, past events are sent immediatley.\n\
+               Depending on network I/O, events near the beginning of\n\
+               a JACK cycle may be in the 'past' (compared to absolute\n\
                time) and hence the OSC stream is jittery\n\
- 'Relative'    use relative time (audio clock) between midi events\n\
+ 'Relative'    use relative time (audio clock) between MIDI events\n\
                with one cycle latency.\n\
                Compared to 'absolute' this mode has smaller jitter and\n\
                always retains the timing.\n\
