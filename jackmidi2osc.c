@@ -920,7 +920,7 @@ static void user_config_file (const char *fn) {
 	}
 #else
 	if (!xdg && home && (strlen(home) + strlen(fn) + 23) < PATH_MAX) {
-		sprintf(filename, "%s/.config/jackmidi2osc/%s", xdg, fn);
+		sprintf(filename, "%s/.config/jackmidi2osc/%s", home, fn);
 		if (testfile(filename)) read_config(filename);
 	}
 #endif
